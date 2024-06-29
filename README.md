@@ -66,7 +66,19 @@ In a terminal command line, run the following to install all modules at once
 
 ### Results
 
-The simulation results are presented below
+The DC decomposition of the system dynamics $f = f_1 - f_2$, where $f_1, f_2$ are convex is illustrated below
+
+
+<br />
+<p align="center">
+   <img src="https://github.com/martindoff/DC-NN-MPC/blob/main/DC.png" alt="Logo" width="600" height="300">
+  <p align="center">
+   DC decomposition with DC Neural Networks
+    <br />  
+  </p>
+</p>
+
+The closed-loop solution is presented below
 
 
 <br />
