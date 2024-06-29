@@ -6,7 +6,7 @@ Computationally tractable learning-based nonlinear tube MPC using difference of 
 <p align="center">
    <img src="https://github.com/martindoff/DC-NN-MPC/blob/main/plot/NN.png" alt="Logo" width="400" height="300">
   <p align="center">
-   Input-Convex Neural Network architecture. 
+   Input-Convex Neural Network architecture whose kernel weights $\Theta$ are constrained to be non-negative and activation functions are convex non-decreasing (e.g. ReLU) 
     <br />  
   </p>
 </p>
@@ -62,4 +62,19 @@ In a terminal command line, run the following to install all modules at once
    ``` 
    
    Set the variable to `False` if the model has to be (re)trained. 
+
+
+### Results
+
+The simulation results are presented below
+
+
+<br />
+<p align="center">
+   <img src="https://github.com/martindoff/DC-NN-MPC/blob/main/plot/tmpc_plot.png" alt="Logo" width="400" height="300">
+  <p align="center">
+   Closed-loop tube MPC solution
+    <br />  
+  </p>
+</p>
 
