@@ -63,6 +63,16 @@ In a terminal command line, run the following to install all modules at once
    
    Set the variable to `False` if the model has to be (re)trained. 
 
+2. The tube parameterisation can be chosen via the `set_param` variable in `main.py`. For a tube cross section parameterised by means of elementwise bounds, set
+
+   ```python
+   set_param = 'elem'
+   ```
+   For a tube parameterised by means of simplex sets:
+
+   ```python
+   set_param = 'splx'
+   ```
 
 ### Results
 
