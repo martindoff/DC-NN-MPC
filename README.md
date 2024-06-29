@@ -4,7 +4,7 @@ Computationally tractable learning-based nonlinear tube MPC using difference of 
 
 <br />
 <p align="center">
-   <img src="https://github.com/martindoff/DC-NN-MPC/blob/main/plot/NN.pdf" alt="Logo" width="400" height="300">
+   <img src="https://github.com/martindoff/DC-NN-MPC/blob/main/plot/NN.png" alt="Logo" width="400" height="300">
   <p align="center">
    Input-Convex Neural Network architecture. 
     <br />  
