@@ -71,7 +71,7 @@ The simulation results are presented below
 
 <br />
 <p align="center">
-   <img src="https://github.com/martindoff/DC-NN-MPC/blob/main/plot/tmpc_plot.png" alt="Logo" width="400" height="300">
+   <img src="https://github.com/martindoff/DC-NN-MPC/blob/main/tmpc_plot.png" alt="Logo" width="400" height="300">
   <p align="center">
    Closed-loop tube MPC solution
     <br />  
