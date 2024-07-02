@@ -113,7 +113,7 @@ def get_terminal(param, delta, weights_g, weights_h, sigma, dsigma):
         
     # Solve SDP problem    
     problem = cp.Problem(objective, constr)
-    problem.solve(verbose=True)
+    problem.solve(verbose=False)
     
     # Post-processing 
     gamma_N = 1/(gamma_inv.value[0, 0])
@@ -196,7 +196,7 @@ def get_terminal_(param, delta, weights_g, weights_h, sigma, dsigma):
     
     # Solve SDP problem    
     problem = cp.Problem(objective, constr)
-    problem.solve(verbose=True)
+    problem.solve(verbose=False)
     
     # Post-processing 
     beta_N = beta.value[0, 0]
@@ -222,7 +222,7 @@ def get_terminal_(param, delta, weights_g, weights_h, sigma, dsigma):
         
     # Solve SDP problem    
     problem = cp.Problem(objective, constr)
-    problem.solve(verbose=True)
+    problem.solve(verbose=False)
     
     # Post-processing 
     gamma_N = gamma.value[0, 0]
