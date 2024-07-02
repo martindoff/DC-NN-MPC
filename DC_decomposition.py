@@ -1,15 +1,13 @@
 """ DC Deep Neural Network models """
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras.constraints import NonNeg
 import matplotlib.pyplot as plt
-import param_init_DC as param
-from pvtol_model import ddy, ddz
-from mpl_toolkits import mplot3d
-import scipy
 import numdifftools as nd
+import numpy as np
+import keras
+from keras import layers
+from keras.constraints import NonNeg
+
+from pvtol_model import ddy, ddz
+
 
 def convex_NN(N_layer, N_node, sigma):
     """ Create a densely connected neural network with convex input-output map
@@ -94,14 +92,14 @@ def split(N_unit, N_layer, sigma, activation, N_batch, N_epoch,
     
     # Load or train model
     if activation == "relu": 
-        file_name = './model_ReLU/f_DC'
+        file_name = './model_ReLU/f_DC.weights.h5'
     elif activation == "elu": 
-        file_name = './model_ELU/f_DC'
+        file_name = './model_ELU/f_DC.weights.h5'
     
     if load:  # load existing model
     
         # Restore the weights
-        model_f_DC.load_weights(file_name).expect_partial()
+        model_f_DC.load_weights(file_name)
 
     else:  # train new model
         

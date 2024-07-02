@@ -14,26 +14,24 @@ system while guaranteeing exact satisfaction of the nonlinear dynamical constrai
 
 """
 
-import numpy as np
-from scipy.linalg import block_diag, sqrtm, cholesky
 import math
-import cvxpy as cp
-import mosek
-import time
 import os
-import param_init as param
-import param_init_DC as param_DC 
-from param_init_DC import f1, f2, ctr
-from terminal import get_terminal as term
-from pvtol_model import f, linearise, discretise, feasibility, f_full,\
-                        interp_feas, linearise_true
-import DC_decomposition as DC
-import pdb
-import numdifftools as nd
-from control_custom import eul, dlqr, dp, seed_cost
-import control as cs
 import sys
-from keras.layers import ReLU, ELU
+import time
+
+import cvxpy as cp
+import numpy as np
+from keras.layers import ReLU
+from scipy.linalg import sqrtm
+
+import DC_decomposition as DC
+import param_init as param
+import param_init_DC as param_DC
+from control_custom import eul, dp, seed_cost
+from pvtol_model import f, linearise, discretise, feasibility, f_full, \
+    interp_feas
+from terminal import get_terminal as term
+
 try:
     import matplotlib
     import matplotlib.pyplot as plt 
