@@ -21,8 +21,12 @@ import time
 
 import cvxpy as cp
 import numpy as np
-from keras.src.layers import ReLU
 from scipy.linalg import sqrtm
+
+try:
+    from keras.src.layers import ReLU
+except ImportError:
+    from keras.layers import ReLU
 
 import DC_decomposition as DC
 import param_init as param
@@ -34,16 +38,6 @@ from terminal import get_terminal as term
 
 import matplotlib
 import matplotlib.pyplot as plt
-# import matplotlib.patches as patches
-# from matplotlib.ticker import FuncFormatter
-
-# try:
-#     import matplotlib
-#     import matplotlib.pyplot as plt
-#     import matplotlib.patches as patches
-#     from matplotlib.ticker import FuncFormatter
-# except ImportError:
-#     pass
 
 ##########################################################################################
 #################################### Initialisation ######################################
@@ -62,7 +56,7 @@ epochs = 100                                   # NN training epochs
 activation = 'relu'                            # activation function ('relu' only)
 N_train = 100000                               # number of training sample of NN
 N_test = 10                                    # number of test points
-load = False                                    # set to False if model has to be retrained
+load = True                                    # set to False if model has to be retrained
 eps = np.finfo(float).eps                      # machine precision
 set_param = 'elem'                             # Tube param ('elem' or 'splx')
                                                # Note: simplex param requires delta >= 0.5

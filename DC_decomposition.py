@@ -256,8 +256,8 @@ def plot(model_f_DC, model_g, model_h, sigma, param):
     plt.show()
     
     # Graph
-    keras.utils.plot_model(model_f_DC, "f_DC.png", show_shapes=True)
-    keras.utils.plot_model(model_g, "f1.png", show_shapes=True)
+    #keras.utils.plot_model(model_f_DC, "f_DC.png", show_shapes=True)
+    #keras.utils.plot_model(model_g, "f1.png", show_shapes=True)
     
     """print("Weights: ")
     for w in model_g.get_weights():
