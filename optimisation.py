@@ -230,7 +230,7 @@ def cvx_opt_elem_fast(x_p, x_0, u_0, x_r, u_r, delta, param, sqrt_Q, sqrt_R, sqr
 
     # Solve problem
     problem = cp.Problem(objective, constr)
-    problem.solve(solver = cp.MOSEK, verbose=False)
+    problem.solve(verbose=False) #solver = cp.MOSEK,
     
     return problem, X_lb, X_ub, v
 
