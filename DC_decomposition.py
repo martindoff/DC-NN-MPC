@@ -4,7 +4,7 @@ import numdifftools as nd
 import numpy as np
 import keras
 from keras import layers
-from keras.constraints import NonNeg
+from keras import constraints
 
 from pvtol_model import ddy, ddz
 
@@ -25,13 +25,13 @@ def convex_NN(N_layer, N_node, sigma):
     
     # Add N_layer dense layers with N_node nodes
     for i in range(N_layer):
-        x1 = layers.Dense(N_node, kernel_constraint=NonNeg())(x)
+        x1 = layers.Dense(N_node, kernel_constraint=constraints.NonNeg())(x)
         #x1 = layers.LeakyReLU(alpha=0.3)(x1)
         x2 = layers.Dense(N_node)(input)
         x = layers.Add()([x1, x2])
         x = sigma()(x)
     
-    output = layers.Dense(2, kernel_constraint=NonNeg())(x)
+    output = layers.Dense(2, kernel_constraint=constraints.NonNeg())(x)
     
     return keras.Model(input, output)
 
@@ -277,8 +277,8 @@ def D_2(f, x_0, delta, i, j):
     n = len(x_0)
     I = np.eye(n)
     
-    return (f(x_0 + delta*I[j, :] + delta*I[i, :]) -f(x_0 + delta*I[j, :])\
-    - f(x_0 + delta*I[i, :]) + f(x_0))/delta**2
+    return (f(x_0 + delta*I[j, :] + delta*I[i, :]) -f(x_0 + delta*I[j, :])
+            - f(x_0 + delta*I[i, :]) + f(x_0))/delta**2
 
 def hess(f, x_0, delta):
     """

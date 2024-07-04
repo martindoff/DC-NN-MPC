@@ -21,7 +21,7 @@ import time
 
 import cvxpy as cp
 import numpy as np
-from keras.layers import ReLU
+from keras.src.layers import ReLU
 from scipy.linalg import sqrtm
 
 import DC_decomposition as DC
@@ -32,13 +32,18 @@ from pvtol_model import f, linearise, discretise, feasibility, f_full, \
     interp_feas
 from terminal import get_terminal as term
 
-try:
-    import matplotlib
-    import matplotlib.pyplot as plt 
-    import matplotlib.patches as patches
-    from matplotlib.ticker import FuncFormatter
-except ImportError:
-    pass
+import matplotlib
+import matplotlib.pyplot as plt
+# import matplotlib.patches as patches
+# from matplotlib.ticker import FuncFormatter
+
+# try:
+#     import matplotlib
+#     import matplotlib.pyplot as plt
+#     import matplotlib.patches as patches
+#     from matplotlib.ticker import FuncFormatter
+# except ImportError:
+#     pass
 
 ##########################################################################################
 #################################### Initialisation ######################################
@@ -50,16 +55,16 @@ T = 15                                         # terminal time
 delta = T/N                                    # time step
 tol1 = 10e-3                                   # tolerance   
 maxIter = 1                                    # max number of iterations
-N_unit= 8                                      # number of units of neural network (NN)
+N_unit = 8                                     # number of units of neural network (NN)
 N_layer = 1                                    # number of hidden layers of NN
 batch_size = 32                                # NN training batch size
-epochs = 20                                    # NN training epochs
+epochs = 100                                   # NN training epochs
 activation = 'relu'                            # activation function ('relu' only)
 N_train = 100000                               # number of training sample of NN
 N_test = 10                                    # number of test points
-load = True                                    # set to False if model has to be retrained
+load = False                                    # set to False if model has to be retrained
 eps = np.finfo(float).eps                      # machine precision
-set_param = 'splx'                             # Tube param ('elem' or 'splx')
+set_param = 'elem'                             # Tube param ('elem' or 'splx')
                                                # Note: simplex param requires delta >= 0.5
 
 # Variables initialisation
@@ -118,8 +123,8 @@ else:
 # Generate training samples
 N_state_DC = 1  # number of states in the nonlinear part of the dynamics (1 state: alpha)
 N_input_DC = 1  # number of input in the  nonlinear part of the dynamics: (1 input: u1) 
-x_train = param_DC.x_max-param_DC.x_min*np.random.rand(N_state_DC,N_train)+param_DC.x_min
-u_train = param_DC.u_max-param_DC.u_min*np.random.rand(N_input_DC,N_train)+param_DC.u_min
+x_train = (param_DC.x_max-param_DC.x_min)*np.random.rand(N_state_DC,N_train)+param_DC.x_min
+u_train = (param_DC.u_max-param_DC.u_min)*np.random.rand(N_input_DC,N_train)+param_DC.u_min
 y_train = f(x_train, u_train, param)
 z_train = np.vstack([x_train, u_train])  # assemble input data
 avg, std = 0, 1
