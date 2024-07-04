@@ -31,18 +31,13 @@ In order to derive a sequence of convex programs, the dynamics are learned in DC
 You need to install the following:
 * numpy
 * matplotlib
-* pydot
-* numdifftools
 * [tensorflow / keras](https://keras.io/getting_started/)
-* [CVXPY](https://www.cvxpy.org/install/)
-* [MOSEK](https://docs.mosek.com/10.2/install/installation.html)
 
 In a terminal command line, run the following to install all modules at once
 
    ```sh
-   pip3 install numpy numdifftools pydot matplotlib tensorflow cvxpy Mosek
+   pip3 install numpy matplotlib tensorflow
    ```
-Using solver `Mosek` requires a license. Follow the instructions [here](https://docs.mosek.com/10.2/install/installation.html) to obtain it and position it correctly in your system.
 
 ### Running the code
 
