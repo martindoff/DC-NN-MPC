@@ -43,5 +43,5 @@ Q_lqr = Q
 R_lqr = R
 
 ## Terminal set parameters
-u_term = np.array([1, 1])                 # Terminal set bound on input 
-x_term = np.array([0.03, 1, 1, 0.1])      # Terminal set bound on state 
+u_term = np.array([1, 2])                 # Terminal set bound on input
+x_term = np.array([0.25, 1, 1, 0.5])      # Terminal set bound on state
