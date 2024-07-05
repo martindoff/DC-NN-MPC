@@ -44,7 +44,7 @@ import matplotlib.pyplot as plt
 ##########################################################################################
 
 # Solver parameters
-N = 30                                         # horizon 
+N = 30                                         # horizon
 T = 15                                         # terminal time
 delta = T/N                                    # time step
 tol1 = 10e-3                                   # tolerance   
@@ -52,7 +52,7 @@ maxIter = 1                                    # max number of iterations
 N_unit = 8                                     # number of units of neural network (NN)
 N_layer = 1                                    # number of hidden layers of NN
 batch_size = 32                                # NN training batch size
-epochs = 100                                   # NN training epochs
+epochs = 200                                   # NN training epochs
 activation = 'relu'                            # activation function ('relu' only)
 N_train = 100000                               # number of training sample of NN
 N_test = 10                                    # number of test points
