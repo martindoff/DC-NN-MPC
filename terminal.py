@@ -26,7 +26,7 @@ def cartesian_product(*arrays):
        
 def get_terminal(param, delta, weights_g, weights_h, sigma, dsigma):
     """ Compute terminal cost, terminal constraint bound and terminal matrix
-    Ouput: terminal matrix Q_N, terminal constraint bound gamma_N and terminal gain K_N 
+    Output: terminal matrix Q_N, terminal constraint bound gamma_N and terminal gain K_N 
     """
     
     # Initialisation 
@@ -38,7 +38,7 @@ def get_terminal(param, delta, weights_g, weights_h, sigma, dsigma):
     Q = param.Q
     R = param.R
     C = Q[-1, None, :]
-    Q_inv = np.linalg.inv(Q); 
+    Q_inv = np.linalg.inv(Q)
     eps = np.finfo(float).eps
     
     
@@ -138,15 +138,16 @@ def get_terminal_(param, delta, weights_g, weights_h, sigma, dsigma):
     Q = param.Q
     R = param.R
     C = Q[-1, None, :]
-    Q_inv = np.linalg.inv(Q); 
+    Q_inv = np.linalg.inv(Q)
     eps = np.finfo(float).eps
-    
-    
+    lam_scaling = 1
+        
     # Variables definition (SDP)
     #Q_N = cp.Variable((n,n), symmetric=True)
     S = cp.Variable((n,n), symmetric=True)
     Y = cp.Variable((m,n))
     beta = cp.Variable((1,1), pos=True)
+    lam = cp.Variable((1,1), pos=True)
     
     # Terminal set definition 
     all_vertices = np.vstack([param.x_term[:, None], param.u_term[:, None]])  # stack state and input terminal bounds
@@ -166,7 +167,7 @@ def get_terminal_(param, delta, weights_g, weights_h, sigma, dsigma):
     
     ## Problem 1
     # Objective 
-    objective = cp.Minimize(beta)
+    objective = cp.Minimize(beta - lam * lam_scaling)
     
     # Initialise constraints
     constr = []
@@ -174,6 +175,9 @@ def get_terminal_(param, delta, weights_g, weights_h, sigma, dsigma):
     # Constraint S = Q_N^-1
     #constr += [cp.vstack([cp.hstack([S, np.eye(n)]), cp.hstack([np.eye(n), Q_N])]) >> eps*np.eye(n*2)]
     
+    # Constraint S >= lam * eye(n)
+    constr += [S >> lam * np.eye(n)]
+
     # Terminal cost constraint
     R_inv = np.linalg.inv(R)
     for i in range(Ver.shape[1]):
@@ -191,40 +195,43 @@ def get_terminal_(param, delta, weights_g, weights_h, sigma, dsigma):
                               cp.hstack([np.zeros((1, n)), beta, W.T, np.zeros((1, n)), np.zeros((1, m))]),
                               cp.hstack([M, W, S, np.zeros((n, n)), np.zeros((n, m))]),
                               cp.hstack([S, np.zeros((n, 1)), np.zeros((n, n)), Q_inv, np.zeros((n, m))]), 
-                              cp.hstack([Y, np.zeros((m, 1)), np.zeros((m, n)), np.zeros((m, n)), R_inv])])\
-                               >> eps*np.eye(3*n+m+1) ]
+                              cp.hstack([Y, np.zeros((m, 1)), np.zeros((m, n)), np.zeros((m, n)), R_inv])]) >> eps*np.eye(3*n+m+1) ]
     
     # Solve SDP problem    
     problem = cp.Problem(objective, constr)
     problem.solve(verbose=False)
     
-    # Post-processing 
+    # Post-processing Problem 1
     beta_N = beta.value[0, 0]
     Q_N = np.linalg.inv(S.value)
     K_N = Y.value @ Q_N
     
     ## Problem 2
-    gamma = cp.Variable((1,1))
-    
-    # Objective 
-    objective = cp.Maximize(gamma)
-    
-    # Initialise constraints
-    constr = []
-    
-    constr += [ gamma * (Q + K_N.T @ R @ K_N) >> beta_N * Q_N]
-    
-    for o in range(n):
-        constr += [gamma <= param.x_term[o]**2/S.value[o, o]]
-    
-    for o in range(m):
-        constr += [gamma <= param.u_term[o]**2/( K_N[o, None, :] @ S.value @ K_N[o, None, :].T)]
-        
-    # Solve SDP problem    
-    problem = cp.Problem(objective, constr)
-    problem.solve(verbose=False)
-    
-    # Post-processing 
-    gamma_N = gamma.value[0, 0]
-    
-    return Q_N, gamma_N, K_N
+    gam = np.zeros(3 * n + 3 * m)
+    Q_N_inv = S.value
+
+    q0 = 0
+    for q in range(n):
+        gam[q0 + q] = param.x_term[q] ** 2 / (Q_N_inv[q, q])
+    q0 = q0 + n
+    for q in range(m):
+        gam[q0 + q] = param.u_term[q] ** 2 / (K_N[q, :] @ Q_N_inv @ (K_N[q, :].T))
+    q0 = q0 + m
+    for q in range(n):
+        gam[q0 + q] = (param.x_max[q] - param.h_r[q]) ** 2 / (Q_N_inv[q, q])
+    q0 = q0 + n
+    for q in range(n):
+        gam[q0 + q] = (param.x_min[q] - param.h_r[q]) ** 2 / (Q_N_inv[q, q])
+    q0 = q0 + n
+    for q in range(m):
+        gam[q0 + q] = (param.u_max[q] - param.u_r[q]) ** 2 / (K_N[q, :] @ Q_N_inv @ (K_N[q, :].T))
+    q0 = q0 + m
+    for q in range(m):
+        gam[q0 + q] = (param.u_min[q] - param.u_r[q]) ** 2 / (K_N[q, :] @ Q_N_inv @ (K_N[q, :].T))
+
+    # Check invariance
+    gamma_N = gam.min()
+    Q_isqrt = scipy.linalg.sqrtm(Q_N_inv)
+    gamma_N_min = beta_N / max(np.linalg.eigvals(Q_isqrt @ (Q + K_N.T @ R @ K_N) @ Q_isqrt))
+
+    return Q_N, gamma_N, K_N, beta_N, gamma_N_min

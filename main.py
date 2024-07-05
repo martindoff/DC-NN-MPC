@@ -35,6 +35,7 @@ from control_custom import eul, dp, seed_cost
 from pvtol_model import f, linearise, discretise, feasibility, f_full, \
     interp_feas
 from terminal import get_terminal as term
+from terminal import get_terminal_ as term_
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -156,12 +157,15 @@ R_lqr = param.R_lqr
 ##########################################################################################
 
 # Compute the terminal set parameters
-Q_N, gamma_N, K_hat = term(param, delta, weights_g, weights_h, sigma, dsigma)
+#Q_N, gamma_N, K_hat = term(param, delta, weights_g, weights_h, sigma, dsigma)
+Q_N, gamma_N, K_hat, beta_N, gamma_N_min = term_(param, delta, weights_g, weights_h, sigma, dsigma)
 sqrt_Q_N = sqrtm(Q_N)
 print("Terminal set parameters Q_hat, K_hat, gamma_hat :")
 print("Q_N\n", Q_N)
 print("K_hat\n", K_hat)
 print("gamma_N\n", gamma_N)
+print("gamma_N_min\n", gamma_N_min)
+print("beta_N\n", beta_N)
 
 ##########################################################################################
 ################################# Feasible trajectory ####################################
