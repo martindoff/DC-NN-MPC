@@ -34,8 +34,7 @@ import param_init_DC as param_DC
 from control_custom import eul, dp, seed_cost
 from pvtol_model import f, linearise, discretise, feasibility, f_full, \
     interp_feas
-from terminal import get_terminal as term
-from terminal import get_terminal_ as term_
+from terminal import get_term, get_term_dist
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -140,8 +139,8 @@ weights_g, weights_h = model_g.get_weights(), model_h.get_weights()
 g     = lambda x: DC.weight_predict(x, sigma, weights_g)
 h     = lambda x: DC.weight_predict(x, sigma, weights_h)
 
-# Plot 
-DC.plot(model_f_DC, model_g, model_h, sigma, param_DC)
+# Plot (uncomment next line to display the DC approximation)
+#DC.plot(model_f_DC, model_g, model_h, sigma, param_DC)
 
 # Test fit and split
 DC.check(f, g, h, z_test, param)
@@ -157,8 +156,22 @@ R_lqr = param.R_lqr
 ##########################################################################################
 
 # Compute the terminal set parameters
-#Q_N, gamma_N, K_hat = term(param, delta, weights_g, weights_h, sigma, dsigma)
-Q_N, gamma_N, K_hat, beta_N, gamma_N_min = term_(param, delta, weights_g, weights_h, sigma, dsigma)
+tol2 = 1e-4
+if np.linalg.norm(param.W_up) >= tol2 or np.linalg.norm(param.W_low) >= tol2:
+    # if external disturbance
+    Q_N, gamma_N, K_hat, beta_N, gamma_N_min = get_term_dist(param, delta, weights_g,
+                                                             weights_h, sigma, dsigma)
+
+    print('External disturbance not yet implemented. '
+          'Reset param.W_low, param.W_up to zero and rerun. Aborting...')
+    sys.exit(1)
+
+else:
+    # if no disturbance
+    Q_N, gamma_N, K_hat = get_term(param, delta, weights_g, weights_h, sigma, dsigma)
+    beta_N = 0
+    gamma_N_min = gamma_N
+
 sqrt_Q_N = sqrtm(Q_N)
 print("Terminal set parameters Q_hat, K_hat, gamma_hat :")
 print("Q_N\n", Q_N)
@@ -315,7 +328,7 @@ for i in range(N):
         t_start = time.time()
         problem, X_lb, X_ub, v = cvx_opt(x[:, i], x_0, u_0, x_r, u_r, delta, param, 
                                          sqrt_Q, sqrt_R, sqrt_Q_N, gamma_N, K, A1,
-                                         A2, B1, B2, 0, 0, g_cvx, h_cvx, g_0, h_0)
+                                         A2, B1, B2, param.W_low, param.W_up, g_cvx, h_cvx, g_0, h_0)
 
         iter_time = time.time()-t_start
         avg_iter_time += iter_time

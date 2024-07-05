@@ -24,7 +24,7 @@ def cartesian_product(*arrays):
         arr[...,i] = a
     return arr.reshape(-1, la)
        
-def get_terminal(param, delta, weights_g, weights_h, sigma, dsigma):
+def get_term(param, delta, weights_g, weights_h, sigma, dsigma):
     """ Compute terminal cost, terminal constraint bound and terminal matrix
     Output: terminal matrix Q_N, terminal constraint bound gamma_N and terminal gain K_N 
     """
@@ -121,7 +121,7 @@ def get_terminal(param, delta, weights_g, weights_h, sigma, dsigma):
     
     return Q_N.value, gamma_N, K_N
 
-def get_terminal_(param, delta, weights_g, weights_h, sigma, dsigma):
+def get_term_dist(param, delta, weights_g, weights_h, sigma, dsigma):
     """ Compute terminal cost, terminal constraint bound and terminal matrix with 
     disturbance.
     Input: parameter structure param, time step delta

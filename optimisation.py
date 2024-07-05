@@ -91,10 +91,10 @@ def cvx_opt_elem(x_p, x_0, u_0, x_r, u_r, delta, param, sqrt_Q, sqrt_R, sqrt_Q_N
         z = cp.vstack([X[0, :-1], v[0,:] + K_x[0,:]])
         
         constr += [X_ub[1:3, 1:] >=  X[1:3, :-1] + delta*(g(z)\
-             -(h_0 + A2_s[1:3, :] + B2_v[1:3, :]) + W_up)]
+             -(h_0 + A2_s[1:3, :] + B2_v[1:3, :]))]
         
         constr += [X_lb[1:3,1:] <=  X[1:3,:-1] + delta*(g_0 + A1_s[1:3,:] + B1_v[1:3,:]\
-                      - h(z) + W_low)]
+                      - h(z))]
         
     # Linear tube constraints
     constr += [X_ub[0, 1:] >=  X_ub[0, :-1] + delta*X_ub[3, :-1],
@@ -207,10 +207,10 @@ def cvx_opt_elem_fast(x_p, x_0, u_0, x_r, u_r, delta, param, sqrt_Q, sqrt_R, sqr
         z = cp.vstack([X[0, :-1], v[0,:] + K_x[0,:]])
         
         constr += [X_ub[1:3, 1:] >=  X[1:3, :-1] + delta*(g(z)\
-             -(h_0 + A2_s[1:3, :] + B2_v[1:3, :]) + W_up)]
+             -(h_0 + A2_s[1:3, :] + B2_v[1:3, :]))]
         
         constr += [X_lb[1:3,1:] <=  X[1:3,:-1] + delta*(g_0 + A1_s[1:3,:] + B1_v[1:3,:]\
-                      - h(z) + W_low)]
+                      - h(z))]
         
     # Linear tube constraints
     constr += [X_ub[0, 1:] >=  X_ub[0, :-1] + delta*X_ub[3, :-1],
@@ -320,15 +320,13 @@ def cvx_opt_simplex(x_p, x_0, u_0, x_r, u_r, delta, param, sqrt_Q, sqrt_R, sqrt_
             
         # Nonlinear tube constraints
         z = cp.vstack([X[0, :-1], v[0,:] + K_x[0,:]])
-        
-        # CHECK W_up & W_low
+
         constr += [beta[1:] >=  cp.sum(X[:, :-1], axis=0) + delta*(X[3, :-1]\
         + cp.sum(g(z) - h_0, axis=0) -( A2_s[1, :] + B2_v[1, :])\
-         -( A2_s[2, :] + B2_v[2, :]) + W_up\
-        + v[1,:] + K_x[1,:])]
+         -( A2_s[2, :] + B2_v[2, :]) + v[1,:] + K_x[1,:])]
         
         constr += [-alpha[1:3,1:] <=  X[1:3,:-1] + delta*(g_0 + A1_s[1:3,:] + B1_v[1:3,:]\
-                      - h(z) + W_low)] # x3' = (g + u1)*cos(x1)-g & x2' = (g + u1)*sin(x1)
+                      - h(z))] # x3' = (g + u1)*cos(x1)-g & x2' = (g + u1)*sin(x1)
                       
         # Linear tube constraints
         constr += [-alpha[0, 1:] <=  X[0, :-1] + delta*X[3, :-1]] # x1' = x4
@@ -445,15 +443,13 @@ def cvx_opt_simplex_fast(x_p, x_0, u_0, x_r, u_r, delta, param, sqrt_Q, sqrt_R, 
             
         # Nonlinear tube constraints
         z = cp.vstack([X[0, :-1], v[0,:] + K_x[0,:]])
-        
-        # CHECK W_up & W_low
+
         constr += [beta[1:] >=  cp.sum(X[:, :-1], axis=0) + delta*(X[3, :-1]\
         + cp.sum(g(z) - h_0, axis=0) -( A2_s[1, :] + B2_v[1, :])\
-         -( A2_s[2, :] + B2_v[2, :]) + W_up\
-        + v[1,:] + K_x[1,:])]
+         -( A2_s[2, :] + B2_v[2, :]) + v[1,:] + K_x[1,:])]
         
         constr += [-alpha[1:3,1:] <=  X[1:3,:-1] + delta*(g_0 + A1_s[1:3,:] + B1_v[1:3,:]\
-                      - h(z) + W_low)] # x3' = (g + u1)*cos(x1)-g & x2' = (g + u1)*sin(x1)
+                      - h(z))] # x3' = (g + u1)*cos(x1)-g & x2' = (g + u1)*sin(x1)
                       
         # Linear tube constraints
         constr += [-alpha[0, 1:] <=  X[0, :-1] + delta*X[3, :-1]] # x1' = x4

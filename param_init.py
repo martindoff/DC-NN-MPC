@@ -30,9 +30,9 @@ h_r = np.array([0, 0, 0, 0])
 u_r = np.array([0, 0])
 
 ## Wind gust parameters
-#W_low, W_up = 0, 0
-W_up = np.array([30, 10])/100
-W_low = -W_up
+#W_up = np.array([30, 10])/100
+#W_low = -W_up
+W_low, W_up = 0, 0  # no external disturbance
 
 ## State and input penalty matrices
 Q = np.diag([10, 1, 1, 1])                # State penalty matrix
