@@ -20,7 +20,7 @@ g = 9.81                                  # Gravity acceleration (m/s^2)
 ## State and input constraints
 u_max = np.array([10, 10])                # max input
 u_min = -u_max                            # min input
-x_max = np.array([.3, 30, 10, 1])         # max state
+x_max = np.array([3, 30, 10, 1])         # max state
 x_min = -x_max                            # min state
 x_init = np.array([0.1, 0, 0, 0])
 u_init = np.array([0, 0])

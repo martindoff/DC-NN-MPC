@@ -78,6 +78,50 @@ Using solver `Mosek` requires a license. Follow the instructions [here](https://
    set_param = 'splx'
    ```
 
+### Curvature penalisation
+
+The concave part of the DC decomposition is replaced online by its Jacobian
+linearisation, and the resulting linearisation error inflates the tube. That error grows
+with the curvature of the decomposition, which can therefore be penalised when training
+the networks. A term
+
+$$\lambda \sum_i d_i^2 [H]_{ii}$$
+
+is added to the training loss, where the second derivatives are evaluated by central
+finite differences over a step $d$ equal to the cross section of the tube. A ReLU network
+is piecewise affine, so its exact Hessian vanishes almost everywhere and the finite step
+is what makes the measure meaningful. The penalty applies at training stage only, so the
+online problem is unchanged.
+
+1. Train the decomposition for the penalty weights of interest ($\lambda = 0$ gives the
+   unpenalised decomposition). The networks whose curvature is penalised are selected
+   with `--penalise`, taking the value `g`, `h` or `gh`
+
+   ```sh
+   python3 train_sweep.py --lambdas 0 1.5 --penalise h
+   ```
+
+2. Solve the MPC problem for each weight and plot the distribution of the linearisation
+   error and the region of attraction of the closed loop. Add `--mc 500` to estimate the
+   feasible fraction of the state box by Monte Carlo
+
+   ```sh
+   python3 run_sweep.py --lambdas 0 1.5 --penalise h
+   ```
+
+3. Compare the closed loop obtained with two weights, from a common set of initial
+   conditions
+
+   ```sh
+   python3 benchmark.py --lambdas 0 1.5 --penalise h
+   ```
+
+A single run with a given decomposition is obtained by passing the weight to `main.py`
+
+   ```sh
+   python3 main.py --lam 1.5 --penalise h
+   ```
+
 ### Results
 
 The DC decomposition of the system dynamics $f = f_1 - f_2$, where $f_1, f_2$ are convex is illustrated below

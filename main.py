@@ -14,6 +14,7 @@ system while guaranteeing exact satisfaction of the nonlinear dynamical constrai
 
 """
 
+import argparse
 import math
 import os
 import sys
@@ -42,6 +43,19 @@ import matplotlib.pyplot as plt
 ##########################################################################################
 #################################### Initialisation ######################################
 ##########################################################################################
+
+# Command line options
+parser = argparse.ArgumentParser(description='DC-TMPC of the PVTOL aircraft')
+parser.add_argument('--lam', type=float, default=None,
+                    help='curvature penalty weight of the decomposition to use '
+                         '(default: the decomposition trained without penalty)')
+parser.add_argument('--penalise', choices=DC.PENALISE_MODES, default='h',
+                    help='networks whose curvature was penalised (default h)')
+parser.add_argument('--outfile', type=str, default='data_NN.npz',
+                    help='file in which the results are saved')
+parser.add_argument('--no-plots', action='store_true',
+                    help='do not display the figures at the end of the run')
+args = parser.parse_args()
 
 # Solver parameters
 N = 30                                         # horizon
@@ -130,9 +144,11 @@ z_test = np.vstack([x_test, u_test])    # assemble input data
 y_test = f(x_test, u_test, param)
 
 # DC split
-model_f_DC, model_g, model_h = DC.split(N_unit, N_layer, layer_sigma, 
-                                        activation, batch_size, epochs, 
-                                        z_train, z_test, y_train, y_test, load)
+model_f_DC, model_g, model_h = DC.split(N_unit, N_layer, layer_sigma,
+                                        activation, batch_size, epochs,
+                                        z_train, z_test, y_train, y_test, load,
+                                        lam=args.lam or 0., penalise=args.penalise,
+                                        file_name=DC.weights_file(args.lam, activation))
 
 # Define functions of the decomposition from NN weights
 weights_g, weights_h = model_g.get_weights(), model_h.get_weights()
@@ -470,6 +486,9 @@ steps = range(0, N+1)
 objs = np.hstack([obj_init, real_obj[:, 1]])
 iter = range(0, maxIter+1)
 objs0 = np.hstack([obj_init, real_obj[0, 1:]])
-np.savez('data_NN.npz',iter= iter, objs0=objs0, steps=steps, objs=objs, t=t, x=x, 
-                                                  X_0=X_0, x_r=x_r, u=u, U_0=U_0, pos=pos)
-plt.show()
+np.savez(args.outfile, iter=iter, objs0=objs0, steps=steps, objs=objs, t=t, x=x,
+         X_0=X_0, x_r=x_r, u=u, U_0=U_0, pos=pos, X_low=X_low, X_up=X_up, K=K,
+         real_obj=real_obj, lam=args.lam if args.lam is not None else 0.,
+         penalise=args.penalise, avg_iter_time=avg_iter_time/iter_count)
+if not args.no_plots:
+    plt.show()

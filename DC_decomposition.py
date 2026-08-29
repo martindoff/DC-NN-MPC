@@ -1,12 +1,134 @@
 """ DC Deep Neural Network models """
+import os
+
 import matplotlib.pyplot as plt
 import numdifftools as nd
 import numpy as np
 import keras
 from keras import layers
 from keras import constraints
+from keras import ops
 
 from pvtol_model import ddy, ddz
+
+## Curvature penalisation
+# Step of the finite differences used to measure the curvature, one value per input
+# (alpha, u1). The linearisation error over a box of half-widths d is bounded at second
+# order by sum_i d_i^2 [H]_ii, so d must be the cross section of the tube: the values
+# below are the largest deviation of the tube vertices from the linearisation trajectory
+# (in alpha) and the input deviation it induces through the feedback gains (in u1),
+# both measured on the closed-loop solution of the unpenalised model.
+HESS_STEP = [0.118, 1.27]
+
+PENALISE_MODES = ['g', 'h', 'gh']
+
+
+def weights_file(lam=None, activation='relu'):
+    """ Weight file of the DC neural network trained with penalty weight lam
+    (lam = None: model of the original decomposition, without penalty)
+    """
+    folder = './model_ReLU' if activation == 'relu' else './model_ELU'
+    if lam is None:
+        return os.path.join(folder, 'f_DC.weights.h5')
+    return os.path.join(folder, 'f_DC_lam{:g}.weights.h5'.format(lam))
+
+
+def hessian_penalty(model, x, step):
+    """ Second order measure of the curvature of a network over a box of half-widths step
+
+    The second derivative is evaluated by central finite differences,
+
+        sum_i [ f(x + d_i e_i) - 2 f(x) + f(x - d_i e_i) ]  =  sum_i d_i^2 [H]_ii,
+
+    where e_i is the i-th standard basis vector of the input space. This is the second
+    order term of the linearisation error over the box, and is non-negative for a convex
+    f. The differences are not divided by d_i^2: each input direction has to be weighted
+    by the tube cross section, otherwise the sum is governed by the input with the largest
+    second derivative rather than by the one contributing most of the error.
+
+    A ReLU network is piecewise affine, so its exact Hessian is zero almost everywhere and
+    cannot be used here; the finite step measures instead the gradient jumps met within a
+    window of that size. The expression is a combination of forward passes and is
+    therefore differentiable with respect to the weights.
+
+    Input: network, batch of inputs x (batch, n_in), steps d (n_in,)
+    Output: scalar penalty
+    """
+    n_in = x.shape[-1]
+    step = np.atleast_1d(np.asarray(step, dtype='float32'))
+    if step.size == 1:
+        step = np.repeat(step, n_in)
+    f0 = model(x)
+    pen = 0.
+    eye = ops.eye(n_in, dtype=x.dtype)
+    for i in range(n_in):
+        e = float(step[i])*eye[i]
+        pen = pen + ops.sum(ops.mean(model(x + e) - 2.*f0 + model(x - e), axis=0))
+    return pen
+
+
+class HessianPenalty(layers.Layer):
+    """ Layer adding lam times the curvature of the penalised networks to the loss
+
+    The layer leaves the output of the model unchanged and only contributes to the
+    training loss, so that the decomposition used online is the one obtained from the
+    weights, unmodified.
+    """
+    def __init__(self, lam, models, step, **kwargs):
+        super().__init__(**kwargs)
+        self.lam = lam
+        self.step = step
+        self._models = models
+
+    def call(self, inputs):
+        x, output = inputs
+        pen = 0.
+        for model in self._models:
+            pen = pen + hessian_penalty(model, x, self.step)
+        self.add_loss(self.lam*pen)
+        return output
+
+
+def grad_predict(x, weights):
+    """ Gradient of a convex_NN model from its weights (ReLU activation)
+
+    Input: evaluation points x (n_in, P), weights
+    Output: gradients (n_out, n_in, P)
+    """
+    x = np.atleast_2d(x)
+    x0 = x
+    W = weights[0].T
+    b = weights[1].T
+    z = W @ x + b[:, None]
+    a = np.maximum(z, 0)
+    J = (z > 0).astype(float)[:, None, :] * W[:, :, None]
+
+    N = (len(weights)-4)//4
+    for i in range(N):
+        Wx = weights[2+i*4].T
+        bx = weights[2+i*4+1].T
+        W0 = weights[2+i*4+2].T
+        b0 = weights[2+i*4+3].T
+        z = Wx @ a + bx[:, None] + W0 @ x0 + b0[:, None]
+        a = np.maximum(z, 0)
+        J = (z > 0).astype(float)[:, None, :] * (np.einsum('ij,jkp->ikp', Wx, J)
+                                                 + W0[:, :, None])
+
+    return np.einsum('oj,jkp->okp', weights[-2].T, J)
+
+
+def lin_err(weights, x_0, d, sigma=lambda x: np.maximum(x, 0)):
+    """ Linearisation error of a convex network, e = f(x_0 + d) - |f_0|(x_0 + d)
+
+    Input: linearisation points x_0 (n_in, P), steps d (n_in, P) or (n_in, 1)
+    Output: e (n_out, P), non-negative by convexity
+    """
+    d = np.broadcast_to(d, x_0.shape)
+    y1 = weight_predict(x_0 + d, sigma, weights)
+    y0 = weight_predict(x_0, sigma, weights)
+    G = grad_predict(x_0, weights)
+
+    return y1 - y0 - np.einsum('okp,kp->op', G, d)
 
 
 def convex_NN(N_layer, N_node, sigma):
@@ -66,36 +188,53 @@ def weight_predict(x, sigma, weights):
     
     return z #sigma(z) 
     
-def split(N_unit, N_layer, sigma, activation, N_batch, N_epoch, 
-                                                  x_train, x_test, y_train, y_test, load):
-    """ 
-    Obtain DC decomposition of function f using DC neural networks 
-    
+def split(N_unit, N_layer, sigma, activation, N_batch, N_epoch,
+                                                  x_train, x_test, y_train, y_test, load,
+                                                  lam=0., penalise='h',
+                                                  step=None, file_name=None):
     """
-    
+    Obtain DC decomposition of function f using DC neural networks
+
+    The curvature of the decomposition can be penalised at training stage by setting
+    lam > 0: a term lam*sum_i d_i^2 [H]_ii is then added to the loss (see
+    hessian_penalty), for the networks selected by penalise ('g', 'h' or 'gh'). The
+    linearisation error of the concave part inflates the tube of the MPC scheme, so
+    reducing its curvature reduces the conservatism of the tube. The penalty applies to
+    training only: the online problem is unchanged.
+
+    Input (in addition to the arguments of the unpenalised decomposition):
+        - lam: weight of the curvature penalty, 0 for no penalty
+        - penalise: networks whose curvature is penalised, 'g', 'h' or 'gh'
+        - step: finite difference step per input, defaults to HESS_STEP
+        - file_name: weight file, defaults to the one given by weights_file
+    """
+
     # Dimensions
     N_arg = x_train.shape[0]  # number of input to NN
-    
+
     # Build model
     input = keras.Input(shape=(N_arg,))
     model_g = convex_NN(N_layer, N_unit, sigma)
     model_h = convex_NN(N_layer, N_unit, sigma)
     g = model_g(input)
     h = model_h(input)
-    
+
     output = layers.Subtract()([g, h])
-    
+
+    if lam > 0:  # penalise the curvature of the selected networks
+        penalised = {'g': [model_g], 'h': [model_h], 'gh': [model_g, model_h]}[penalise]
+        output = HessianPenalty(lam, penalised,
+                                HESS_STEP if step is None else step)([input, output])
+
     model_f_DC = keras.Model(inputs=input, outputs=output)
 
-    # Compile 
+    # Compile
     model_f_DC.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
-    
+
     # Load or train model
-    if activation == "relu": 
-        file_name = './model_ReLU/f_DC.weights.h5'
-    elif activation == "elu": 
-        file_name = './model_ELU/f_DC.weights.h5'
-    
+    if file_name is None:
+        file_name = weights_file(None, activation)
+
     if load:  # load existing model
     
         # Restore the weights
